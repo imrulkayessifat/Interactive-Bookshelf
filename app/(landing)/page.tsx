@@ -6,6 +6,7 @@ import { useForm } from "react-hook-form"
 import * as z from "zod"
 import { useState } from "react";
 import Image from "next/image";
+import { Plus } from 'lucide-react';
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,8 +29,8 @@ import {
 
 
 const formSchema = z.object({
-  search: z.string().min(0, {
-    message: "",
+  search: z.string().min(1, {
+    message: "At least 1 Character!",
   }),
 })
 
@@ -75,35 +76,35 @@ export default function Home() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {books.map((book) => (
-          // <div key={book.id} className="p-4 border rounded-md">
-          //   <img src={book.volumeInfo.imageLinks.thumbnail} alt={book.volumeInfo.title} />
-          //   <h2>{book.volumeInfo.title}</h2>
-          //   <p>{book.volumeInfo.authors.join(', ')}</p>
-          //   <p>{book.volumeInfo.description}</p>
-          // </div>
-          <Card key={book.id} className="pb-2">
-            <CardContent className="p-2">
-              <Image
-                src={book.volumeInfo.imageLinks.thumbnail}
-                alt={book.volumeInfo.title}
-                layout='responsive'
-                width={500}
-                height={281}
-                objectFit='cover'
-                className="rounded-md"
-              />
-            </CardContent>
-            <CardFooter className="flex rounded-md border-2 mx-2 justify-between">
-              <div className="flex justify-between gap-2 pt-2">
-                <div className="flex gap-2">
-                  <h2 className="font-sans text-sm md:text-base">Title : {book.volumeInfo.title}</h2>
-                  <p className="font-sans text-sm md:text-base">
-                    Author : {book.volumeInfo.authors.join(', ')}
-                  </p>
-                </div>
-                <Button variant="default">Generate</Button>
-              </div>
-            </CardFooter>
+          <Card key={book.id} className="flex flex-col justify-between gap-2 pb-2">
+            <CardHeader>
+              <CardTitle>{book.volumeInfo.title ? book.volumeInfo.title : 'No Title available'}</CardTitle>
+              <CardDescription>
+                {book.volumeInfo.description
+                  ? book.volumeInfo.description.split(' ').slice(0, 10).join(' ') + '...'
+                  : 'No description available'}
+              </CardDescription>
+            </CardHeader>
+              <CardContent className="p-2">
+                <Image
+                  src={book.volumeInfo.imageLinks.thumbnail}
+                  alt={book.volumeInfo.title}
+                  layout='responsive'
+                  width={500}
+                  height={281}
+                  objectFit='cover'
+                  className="rounded-md"
+                />
+              </CardContent>
+              <CardFooter className="flex rounded-md border-2 mx-2 justify-between">
+                <p className="font-sans text-sm md:text-base">
+                  Author : {book.volumeInfo.authors ? book.volumeInfo.authors.join(', ') : 'No authors listed'}
+                </p>
+                <Button variant="default" className="mt-2">
+                  Add
+                  <Plus className="w-5 h-5" />
+                </Button>
+              </CardFooter>
           </Card>
         ))}
       </div>
