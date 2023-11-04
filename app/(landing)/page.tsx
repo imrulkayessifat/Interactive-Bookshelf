@@ -39,6 +39,18 @@ const defaultValues: Partial<FormValues> = {
   search: ""
 }
 
+type Book = {
+  id: string;
+  volumeInfo: {
+    title: string;
+    description: string;
+    imageLinks: {
+      thumbnail: string;
+    };
+    authors: string[];
+  };
+};
+
 export default function Home() {
 
   const form = useForm<FormValues>({
@@ -46,7 +58,7 @@ export default function Home() {
     defaultValues,
   })
 
-  const [books, setBooks] = useState([]);
+  const [books, setBooks] = useState<Book[]>([]);
 
   const onSubmit = async (data: FormValues) => {
     const response = await axios.get(`https://www.googleapis.com/books/v1/volumes?q=${data.search}`);
