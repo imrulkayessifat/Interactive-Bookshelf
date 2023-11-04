@@ -79,9 +79,32 @@ export default function Home() {
     setIsLoading(true);
     try {
       const response = await axios.get(`https://www.googleapis.com/books/v1/volumes?q=${data.search}`);
-      setBooks(response.data.items);
-    } catch (error) {
-      console.error(error);
+      if (response.status === 403) {
+        throw new Error("You've been reading too fast! Please wait a bit and try searching again.");
+      }
+
+      if (response.data && response.data.items) {
+        setBooks(response.data.items);
+      } else {
+        throw new Error("Hmm, we can't seem to get all the details for this book. Try another one?");
+      }
+    } catch (error: any) {
+      if (error.response && error.response.status === 403) {
+        toast({
+          variant: "destructive",
+          description: "You've been reading too fast! Please wait a bit and try searching again.",
+        });
+      } else if (error.message === "Network Error") {
+        toast({
+          variant: "destructive",
+          description: "Looks like a connection issue. Make sure you're online and try again.",
+        });
+      } else {
+        toast({
+          variant: "destructive",
+          description: "An unexpected error occurred. Please try again later.",
+        });
+      }
     }
     setIsLoading(false);
   }
