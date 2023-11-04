@@ -144,7 +144,7 @@ export default function Home() {
             </CardHeader>
             <CardContent className="p-2">
               <Image
-                src={book.volumeInfo.imageLinks.thumbnail}
+                src={book.volumeInfo.imageLinks?.thumbnail || '/download.png'}
                 alt={book.volumeInfo.title}
                 layout='responsive'
                 width={500}
