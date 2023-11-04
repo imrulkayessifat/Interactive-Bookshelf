@@ -7,6 +7,7 @@ import * as z from "zod"
 import { useState } from "react";
 import Image from "next/image";
 import { Plus } from 'lucide-react';
+import { Player, Controls } from '@lottiefiles/react-lottie-player';
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -39,7 +40,7 @@ import { useToast } from "@/components/ui/use-toast"
 import BookShelf from "@/components/bookshelf";
 
 const formSchema = z.object({
-  search: z.string().min(1, {
+  search: z.string().min(0, {
     message: "At least 1 Character!",
   }),
 })
@@ -70,12 +71,19 @@ export default function Home() {
   })
 
   const [books, setBooks] = useState<Book[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
   const [bookshelf, setBookshelf] = useState<Book[]>([]);
   const { toast } = useToast()
 
   const onSubmit = async (data: FormValues) => {
-    const response = await axios.get(`https://www.googleapis.com/books/v1/volumes?q=${data.search}`);
-    setBooks(response.data.items);
+    setIsLoading(true);
+    try {
+      const response = await axios.get(`https://www.googleapis.com/books/v1/volumes?q=${data.search}`);
+      setBooks(response.data.items);
+    } catch (error) {
+      console.error(error);
+    }
+    setIsLoading(false);
   }
 
   const addToBookshelf = (book: Book) => {
@@ -130,41 +138,60 @@ export default function Home() {
           </DialogContent>
         </Dialog>
       </div>
+      {isLoading ? (
+        <Player
+          autoplay
+          loop
+          src="https://lottie.host/6d49b499-8138-472c-8d8a-3cc8db8b7911/fr6l1ZDP7v.json"
+          style={{ height: '300px', width: '300px' }}
+        >
+        </Player>
+      ) : books.length > 0 ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {books.map((book) => (
+            <Card key={book.id} className="flex flex-col justify-between gap-2 pb-2">
+              <CardHeader>
+                <CardTitle>{book.volumeInfo.title ? book.volumeInfo.title : 'No Title available'}</CardTitle>
+                <CardDescription>
+                  {book.volumeInfo.description
+                    ? book.volumeInfo.description.split(' ').slice(0, 10).join(' ') + '...'
+                    : 'No description available'}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="p-2">
+                <Image
+                  src={book.volumeInfo.imageLinks?.thumbnail || '/download.png'}
+                  alt={book.volumeInfo.title}
+                  layout='responsive'
+                  width={500}
+                  height={281}
+                  objectFit='cover'
+                  className="rounded-md"
+                />
+              </CardContent>
+              <CardFooter className="flex rounded-md border-2 mx-2 justify-between">
+                <p className="font-sans text-sm md:text-base">
+                  Author : {book.volumeInfo.authors ? book.volumeInfo.authors.join(', ') : 'No authors listed'}
+                </p>
+                <Button variant="default" className="mt-2" onClick={() => addToBookshelf(book)}>
+                  Add
+                  <Plus className="w-5 h-5" />
+                </Button>
+              </CardFooter>
+            </Card>
+          ))}
+        </div>
+      ) : (
+        <Player
+          autoplay
+          loop
+          src="https://lottie.host/3fcf52a1-344d-4a3e-8911-da5bd7a2372f/i7Wg3yEr44.json"
+          style={{ height: '300px', width: '300px' }}
+        />
+      )
+      }
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {books.map((book) => (
-          <Card key={book.id} className="flex flex-col justify-between gap-2 pb-2">
-            <CardHeader>
-              <CardTitle>{book.volumeInfo.title ? book.volumeInfo.title : 'No Title available'}</CardTitle>
-              <CardDescription>
-                {book.volumeInfo.description
-                  ? book.volumeInfo.description.split(' ').slice(0, 10).join(' ') + '...'
-                  : 'No description available'}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="p-2">
-              <Image
-                src={book.volumeInfo.imageLinks?.thumbnail || '/download.png'}
-                alt={book.volumeInfo.title}
-                layout='responsive'
-                width={500}
-                height={281}
-                objectFit='cover'
-                className="rounded-md"
-              />
-            </CardContent>
-            <CardFooter className="flex rounded-md border-2 mx-2 justify-between">
-              <p className="font-sans text-sm md:text-base">
-                Author : {book.volumeInfo.authors ? book.volumeInfo.authors.join(', ') : 'No authors listed'}
-              </p>
-              <Button variant="default" className="mt-2" onClick={() => addToBookshelf(book)}>
-                Add
-                <Plus className="w-5 h-5" />
-              </Button>
-            </CardFooter>
-          </Card>
-        ))}
-      </div>
+
     </div >
   );
 }
