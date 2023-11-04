@@ -26,7 +26,17 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
+import { useToast } from "@/components/ui/use-toast"
+import BookShelf from "@/components/bookshelf";
 
 const formSchema = z.object({
   search: z.string().min(1, {
@@ -39,11 +49,12 @@ const defaultValues: Partial<FormValues> = {
   search: ""
 }
 
-type Book = {
+export type Book = {
   id: string;
   volumeInfo: {
     title: string;
     description: string;
+    publishedDate: string;
     imageLinks: {
       thumbnail: string;
     };
@@ -59,32 +70,66 @@ export default function Home() {
   })
 
   const [books, setBooks] = useState<Book[]>([]);
+  const [bookshelf, setBookshelf] = useState<Book[]>([]);
+  const { toast } = useToast()
 
   const onSubmit = async (data: FormValues) => {
     const response = await axios.get(`https://www.googleapis.com/books/v1/volumes?q=${data.search}`);
     setBooks(response.data.items);
   }
-  console.log(books)
+
+  const addToBookshelf = (book: Book) => {
+    setBookshelf((prevBookshelf) => [...prevBookshelf, book]);
+    toast({
+      variant: "sky",
+      description: "Add to bookself",
+    })
+  }
+
+  const onDelete = (id: string) => {
+    const updatedBooks = bookshelf.filter(book => book.id !== id);
+    setBookshelf(updatedBooks)
+  }
+
   return (
     <div className="flex flex-col gap-5 p-10">
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="flex gap-5 space-y-8">
-          <FormField
-            control={form.control}
-            name="search"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Search</FormLabel>
-                <FormControl>
-                  <Input placeholder="shadcn" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <Button type="submit">Submit</Button>
-        </form>
-      </Form>
+      <div className="flex justify-start gap-5">
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="flex gap-5 space-y-8">
+            <FormField
+              control={form.control}
+              name="search"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Search</FormLabel>
+                  <FormControl>
+                    <Input placeholder="shadcn" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <Button type="submit">Submit</Button>
+          </form>
+        </Form>
+
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button className="mt-8" variant="outline">Book Self</Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[825px]">
+            <DialogHeader>
+              <DialogTitle>Book Self</DialogTitle>
+              <DialogDescription>
+                Show your added books!
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <BookShelf onDelete={onDelete} bookself={bookshelf} />
+            </div>
+          </DialogContent>
+        </Dialog>
+      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {books.map((book) => (
@@ -97,26 +142,26 @@ export default function Home() {
                   : 'No description available'}
               </CardDescription>
             </CardHeader>
-              <CardContent className="p-2">
-                <Image
-                  src={book.volumeInfo.imageLinks.thumbnail}
-                  alt={book.volumeInfo.title}
-                  layout='responsive'
-                  width={500}
-                  height={281}
-                  objectFit='cover'
-                  className="rounded-md"
-                />
-              </CardContent>
-              <CardFooter className="flex rounded-md border-2 mx-2 justify-between">
-                <p className="font-sans text-sm md:text-base">
-                  Author : {book.volumeInfo.authors ? book.volumeInfo.authors.join(', ') : 'No authors listed'}
-                </p>
-                <Button variant="default" className="mt-2">
-                  Add
-                  <Plus className="w-5 h-5" />
-                </Button>
-              </CardFooter>
+            <CardContent className="p-2">
+              <Image
+                src={book.volumeInfo.imageLinks.thumbnail}
+                alt={book.volumeInfo.title}
+                layout='responsive'
+                width={500}
+                height={281}
+                objectFit='cover'
+                className="rounded-md"
+              />
+            </CardContent>
+            <CardFooter className="flex rounded-md border-2 mx-2 justify-between">
+              <p className="font-sans text-sm md:text-base">
+                Author : {book.volumeInfo.authors ? book.volumeInfo.authors.join(', ') : 'No authors listed'}
+              </p>
+              <Button variant="default" className="mt-2" onClick={() => addToBookshelf(book)}>
+                Add
+                <Plus className="w-5 h-5" />
+              </Button>
+            </CardFooter>
           </Card>
         ))}
       </div>
